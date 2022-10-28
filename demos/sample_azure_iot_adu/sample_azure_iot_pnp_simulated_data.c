@@ -22,7 +22,7 @@
 
 /*-----------------------------------------------------------*/
 
-#define sampleazureiotUPDATE_HANDLER "microsoft/swupdate:1"
+#define sampleazureiotUPDATE_HANDLER                      "microsoft/swupdate:1"
 
 /**
  * @brief Command values
@@ -278,11 +278,11 @@ static bool prvDoesInstalledCriteriaMatchCurrentVersion( const AzureIoTADUUpdate
 static bool prvIsHandlerSupported( const AzureIoTADUUpdateRequest_t * pxAduUpdateRequest )
 {
     if( ( ( sizeof( sampleazureiotUPDATE_HANDLER ) - 1 ) ==
-          pxAduUpdateRequest->xUpdateManifest.xInstructions.pxSteps->ulHandlerLength ) &&
+          pxAduUpdateRequest->xUpdateManifest.xInstructions.pxSteps[ 0 ].ulHandlerLength ) &&
         ( strncmp(
               ( const char * ) sampleazureiotUPDATE_HANDLER,
-              ( const char * ) pxAduUpdateRequest->xUpdateManifest.xInstructions.pxSteps->pucHandler,
-              ( size_t ) pxAduUpdateRequest->xUpdateManifest.xInstructions.pxSteps->ulHandlerLength ) == 0 ) )
+              ( const char * ) pxAduUpdateRequest->xUpdateManifest.xInstructions.pxSteps[ 0 ].pucHandler,
+              ( size_t ) pxAduUpdateRequest->xUpdateManifest.xInstructions.pxSteps[ 0 ].ulHandlerLength ) == 0 ) )
     {
         return true;
     }
@@ -307,9 +307,9 @@ static bool prvIsHandlerSupported( const AzureIoTADUUpdateRequest_t * pxAduUpdat
  */
 static AzureIoTADURequestDecision_t prvUserDecideShouldStartUpdate( AzureIoTADUUpdateRequest_t * pxAduUpdateRequest )
 {
-    if(!prvIsHandlerSupported(pxAduUpdateRequest))
+    if( !prvIsHandlerSupported( pxAduUpdateRequest ) )
     {
-      return eAzureIoTADURequestDecisionReject;
+        return eAzureIoTADURequestDecisionReject;
     }
 
     if( prvDoesInstalledCriteriaMatchCurrentVersion( pxAduUpdateRequest ) )
