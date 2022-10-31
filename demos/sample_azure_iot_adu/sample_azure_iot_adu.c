@@ -134,7 +134,8 @@
  */
 #define ADU_HEADER_BUFFER_SIZE                                512
 
-#define democonfigADU_UPDATE_ID                               "{\"provider\":\"" democonfigADU_UPDATE_PROVIDER "\",\"name\":\"" democonfigADU_UPDATE_NAME "\",\"version\":\"" democonfigADU_UPDATE_VERSION "\"}"
+#define democonfigADU_UPDATE_ID                               democonfigADU_UPDATE_VERSION
+//#define democonfigADU_UPDATE_ID                               "{\"provider\":\"" democonfigADU_UPDATE_PROVIDER "\",\"name\":\"" democonfigADU_UPDATE_NAME "\",\"version\":\"" democonfigADU_UPDATE_VERSION "\"}"
 
 #ifdef democonfigADU_UPDATE_NEW_VERSION
     #define democonfigADU_SPOOFED_UPDATE_ID                   "{\"provider\":\"" democonfigADU_UPDATE_PROVIDER "\",\"name\":\"" democonfigADU_UPDATE_NAME "\",\"version\":\"" democonfigADU_UPDATE_NEW_VERSION "\"}"
