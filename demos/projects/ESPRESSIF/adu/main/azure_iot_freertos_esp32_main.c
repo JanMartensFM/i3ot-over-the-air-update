@@ -27,6 +27,9 @@
 
 /* Azure Device Update */
 #include <azure/iot/az_iot_adu_client.h>
+
+#include "sensor_manager.h"
+#include "azure_iot_freertos_esp32_sensors_data.h"
 /*-----------------------------------------------------------*/
 
 #define NR_OF_IP_ADDRESSES_TO_WAIT_FOR     1
@@ -67,6 +70,7 @@
 
 #define SNTP_SERVER_FQDN                                "pool.ntp.org"
 
+#define OLED_SPLASH_MESSAGE                        "ESP32 ADU v" democonfigADU_UPDATE_VERSION
 /*-----------------------------------------------------------*/
 
 static const char * TAG = "sample_azureiotkit";
@@ -320,6 +324,11 @@ void app_main( void )
 
     /*Allow other core to finish initialization */
     vTaskDelay( pdMS_TO_TICKS( 100 ) );
+
+    initialize_sensors( );
+    oled_clean_screen();
+
+    oled_show_message( ( uint8_t * ) OLED_SPLASH_MESSAGE, sizeof( OLED_SPLASH_MESSAGE ) - 1 );
 
     ( void ) prvConnectNetwork();
 

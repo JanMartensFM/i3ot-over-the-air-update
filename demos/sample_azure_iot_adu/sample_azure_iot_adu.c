@@ -36,6 +36,7 @@
 
 /* Data Interface Definition */
 #include "sample_azure_iot_pnp_data_if.h"
+
 /*-----------------------------------------------------------*/
 
 /* Compile time error for undefined configs. */
@@ -134,8 +135,12 @@
  */
 #define ADU_HEADER_BUFFER_SIZE                                512
 
-#define democonfigADU_UPDATE_ID                               democonfigADU_UPDATE_VERSION
-//#define democonfigADU_UPDATE_ID                               "{\"provider\":\"" democonfigADU_UPDATE_PROVIDER "\",\"name\":\"" democonfigADU_UPDATE_NAME "\",\"version\":\"" democonfigADU_UPDATE_VERSION "\"}"
+//#define democonfigADU_UPDATE_ID                               democonfigADU_UPDATE_VERSION
+#define democonfigADU_UPDATE_ID                               "{\"provider\":\"" democonfigADU_UPDATE_PROVIDER "\",\"name\":\"" democonfigADU_UPDATE_NAME "\",\"version\":\"" democonfigADU_UPDATE_VERSION "\"}"
+
+
+#define democonfigADU_UPDATE_ID_FIXED                               "{\"provider\":\"ESPRESSIF\",\"name\":\"ESP32-Azure-IoT-Kit\",\"version\":\"1.0\"}"
+
 
 #ifdef democonfigADU_UPDATE_NEW_VERSION
     #define democonfigADU_SPOOFED_UPDATE_ID                   "{\"provider\":\"" democonfigADU_UPDATE_PROVIDER "\",\"name\":\"" democonfigADU_UPDATE_NAME "\",\"version\":\"" democonfigADU_UPDATE_NEW_VERSION "\"}"
@@ -163,13 +168,21 @@ struct NetworkContext
     TlsTransportParams_t * pParams;
 };
 
+
+
+
+
+
+
 AzureIoTHubClient_t xAzureIoTHubClient;
 AzureIoTADUClient_t xAzureIoTADUClient;
 AzureIoTADUUpdateRequest_t xAzureIoTAduUpdateRequest;
 bool xProcessUpdateRequest = false;
 
+
 AzureIoTADUClientDeviceProperties_t xADUDeviceProperties =
 {
+
     .ucManufacturer                           = ( const uint8_t * ) democonfigADU_DEVICE_MANUFACTURER,
     .ulManufacturerLength                     = sizeof( democonfigADU_DEVICE_MANUFACTURER ) - 1,
     .ucModel                                  = ( const uint8_t * ) democonfigADU_DEVICE_MODEL,
@@ -177,7 +190,8 @@ AzureIoTADUClientDeviceProperties_t xADUDeviceProperties =
     .ucCurrentUpdateId                        = ( const uint8_t * ) democonfigADU_UPDATE_ID,
     .ulCurrentUpdateIdLength                  = sizeof( democonfigADU_UPDATE_ID ) - 1,
     .ucDeliveryOptimizationAgentVersion       = NULL,
-    .ulDeliveryOptimizationAgentVersionLength = 0
+    .ulDeliveryOptimizationAgentVersionLength = 0,
+
 };
 
 static AzureADUImage_t xImage;
@@ -446,6 +460,17 @@ static AzureIoTResult_t prvDownloadUpdateImageIntoFlash( int32_t ullTimeoutInSec
     xHTTPNetworkContext.pParams = &xHTTPTlsTransportParams;
 
     AzureIoTPlatform_Init( &xImage );
+
+
+        LogInfo( ( "democonfigADU_UPDATE_ID : " ) );
+
+        LogInfo( (democonfigADU_UPDATE_ID ) );
+
+        LogInfo( ( "democonfigADU_UPDATE_ID_FIXED : " ) );
+
+        LogInfo( (democonfigADU_UPDATE_ID_FIXED ) );
+
+
 
     LogInfo( ( "[ADU] Step: eAzureIoTADUUpdateStepFirmwareDownloadStarted" ) );
 
