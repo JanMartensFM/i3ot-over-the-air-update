@@ -1,4 +1,4 @@
-name: Create Docker Image for Carrier Changes Subscriber
+name: Create Firmware for OTA using ADU
 
 on: 
   workflow_dispatch:
