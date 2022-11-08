@@ -24,7 +24,7 @@ jobs:
     - name: esp-idf build
       uses: espressif/esp-idf-ci-action@v1
       with:
-        esp_idf_version: latest
+        esp_idf_version: v4.3
         target: esp32
         path: 'demos/projects/ESPRESSIF/adu/'
     - name: Upload ESP32 firmware
