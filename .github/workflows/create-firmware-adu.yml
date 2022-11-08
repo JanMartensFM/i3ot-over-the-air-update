@@ -27,8 +27,8 @@ jobs:
         esp_idf_version: v4.3
         target: esp32
         path: 'demos/projects/ESPRESSIF/adu/'
-    - name: ESP32 firmware
+    - name: Upload ESP32 firmware
       uses: actions/upload-artifact@v3
       with:
         name: azure_iot_freertos_esp32.bin
-        path: /app/demos/projects/ESPRESSIF/adu/build/azure_iot_freertos_esp32.bin
+        path: demos/projects/ESPRESSIF/adu/build/azure_iot_freertos_esp32.bin
