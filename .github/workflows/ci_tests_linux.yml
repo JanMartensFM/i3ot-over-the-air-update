@@ -3,7 +3,7 @@ name: Linux CI Tests
 on: 
   push:
     branches:
-      - main
+      - maindummy
   pull_request:
 
 jobs:
