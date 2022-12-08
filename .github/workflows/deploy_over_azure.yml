@@ -47,7 +47,7 @@ jobs:
       uses: azure/CLI@v1
       with:
         inlineScript: |
-            az iot du update stage --account fmaduseviceaccount --instance fmdevupdatetoiothub --manifest-path --storage-account rgtestjanstorageacc --storage-container espressif-esp32-azure-iot-kit-1-3 --overwrite --then-import
+            az iot du update stage --account fmaduseviceaccount --instance fmdevupdatetoiothub --manifest-path demos/projects/ESPRESSIF/adu/ESPRESSIF.ESP32-Azure-IoT-Kit.1.9.importmanifest.json --storage-account rgtestjanstorageacc --storage-container espressif-esp32-azure-iot-kit-1-3 --overwrite --then-import
 
 
 
