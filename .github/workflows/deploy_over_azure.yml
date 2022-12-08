@@ -21,14 +21,6 @@ jobs:
       with:
         submodules: 'recursive'
         ref: feature/iot-adu
-    - name: esp-idf build
-      uses: espressif/esp-idf-ci-action@v1
+    - uses: azure/login@v1
       with:
-        esp_idf_version: v4.3
-        target: esp32
-        path: 'demos/projects/ESPRESSIF/adu/'
-    - name: Upload ESP32 firmware
-      uses: actions/upload-artifact@v3
-      with:
-        name: azure_iot_freertos_esp32.bin
-        path: demos/projects/ESPRESSIF/adu/build/azure_iot_freertos_esp32.bin
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
