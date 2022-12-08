@@ -24,3 +24,9 @@ jobs:
     - uses: azure/login@v1
       with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
+          
+    - name: Upload to blob storage
+      uses: azure/CLI@v1
+      with:
+        inlineScript: |
+            az storage blob upload --account-name rgtestjanstorageacc --auth-mode key -c espressif-esp32-azure-iot-kit-1-3 -f CMakePresets.json
