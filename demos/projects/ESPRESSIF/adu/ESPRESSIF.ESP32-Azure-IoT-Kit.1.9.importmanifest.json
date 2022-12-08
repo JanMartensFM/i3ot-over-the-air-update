@@ -17,7 +17,7 @@
                                            "type":  "inline",
                                            "handler":  "microsoft/swupdate:1",
                                            "files":  [
-                                                         "azure_iot_freertos_esp32-v1.9.bin"
+                                                         "azure_iot_freertos_esp32.bin"
                                                      ],
                                            "handlerProperties":  {
                                                                      "installedCriteria":  "1.2"
@@ -27,7 +27,7 @@
                      },
     "files":  [
                   {
-                      "filename":  "azure_iot_freertos_esp32-v1.9.bin",
+                      "filename":  "azure_iot_freertos_esp32.bin",
                       "sizeInBytes":  909424,
                       "hashes":  {
                                      "sha256":  "Qmss/BSm7qrVq5A/s2HqOi9jd6+UPClTuqkc1Z0R2N0="
