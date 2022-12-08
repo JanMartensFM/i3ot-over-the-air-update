@@ -17,7 +17,7 @@
                                            "type":  "inline",
                                            "handler":  "microsoft/swupdate:1",
                                            "files":  [
-                                                         "azure_iot_freertos_esp32.bin"
+                                                         "build/azure_iot_freertos_esp32.bin"
                                                      ],
                                            "handlerProperties":  {
                                                                      "installedCriteria":  "1.2"
