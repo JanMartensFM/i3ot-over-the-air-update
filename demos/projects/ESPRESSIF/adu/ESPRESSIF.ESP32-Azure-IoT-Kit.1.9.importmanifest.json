@@ -27,7 +27,7 @@
                      },
     "files":  [
                   {
-                      "filename":  "azure_iot_freertos_esp32.bin",
+                      "filename":  "build/azure_iot_freertos_esp32.bin",
                       "sizeInBytes":  909424,
                       "hashes":  {
                                      "sha256":  "Qmss/BSm7qrVq5A/s2HqOi9jd6+UPClTuqkc1Z0R2N0="
