@@ -1,0 +1,39 @@
+﻿{
+    "updateId":  {
+                     "provider":  "ESPRESSIF",
+                     "name":  "ESP32-Azure-IoT-Kit",
+                     "version":  "1.2"
+                 },
+    "isDeployable":  true,
+    "compatibility":  [
+                          {
+                              "deviceModel":  "ESP32-Azure-IoT-Kit",
+                              "deviceManufacturer":  "ESPRESSIF"
+                          }
+                      ],
+    "instructions":  {
+                         "steps":  [
+                                       {
+                                           "type":  "inline",
+                                           "handler":  "microsoft/swupdate:1",
+                                           "files":  [
+                                                         "azure_iot_freertos_esp32-v1.2.bin"
+                                                     ],
+                                           "handlerProperties":  {
+                                                                     "installedCriteria":  "1.2"
+                                                                 }
+                                       }
+                                   ]
+                     },
+    "files":  [
+                  {
+                      "filename":  "azure_iot_freertos_esp32-v1.2.bin",
+                      "sizeInBytes":  909424,
+                      "hashes":  {
+                                     "sha256":  "Qmss/BSm7qrVq5A/s2HqOi9jd6+UPClTuqkc1Z0R2N0="
+                                 }
+                  }
+              ],
+    "createdDateTime":  "2022-10-31T14:55:59.7381431Z",
+    "manifestVersion":  "4.0"
+}
