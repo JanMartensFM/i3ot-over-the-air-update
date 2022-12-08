@@ -1,4 +1,4 @@
-name: Create Firmware for OTA using ADU
+name: Deploy over Azure
 
 on: 
   workflow_dispatch:
