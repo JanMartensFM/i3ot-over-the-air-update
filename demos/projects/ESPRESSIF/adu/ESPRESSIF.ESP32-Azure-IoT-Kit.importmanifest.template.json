@@ -2,7 +2,7 @@
     "updateId":  {
                      "provider":  "ESPRESSIF",
                      "name":  "ESP32-Azure-IoT-Kit",
-                     "version":  "1.2"
+                     "version":  "1.9"
                  },
     "isDeployable":  true,
     "compatibility":  [
@@ -17,7 +17,7 @@
                                            "type":  "inline",
                                            "handler":  "microsoft/swupdate:1",
                                            "files":  [
-                                                         "azure_iot_freertos_esp32-v1.2.bin"
+                                                         "azure_iot_freertos_esp32.bin"
                                                      ],
                                            "handlerProperties":  {
                                                                      "installedCriteria":  "1.2"
@@ -27,7 +27,7 @@
                      },
     "files":  [
                   {
-                      "filename":  "azure_iot_freertos_esp32-v1.2.bin",
+                      "filename":  "azure_iot_freertos_esp32.bin",
                       "sizeInBytes":  {{sizeInBytes}},
                       "hashes":  {
                                      "sha256":  "{{hashCode}}"
