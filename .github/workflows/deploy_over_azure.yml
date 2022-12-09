@@ -49,7 +49,11 @@ jobs:
       with:
         source: "demos/projects/ESPRESSIF/adu/build/azure_iot_freertos_esp32.bin"
         target: "demos/projects/ESPRESSIF/adu/azure_iot_freertos_esp32.bin"
-        
+      
+    - name: Update manifest file
+      run: python demos/projects/ESPRESSIF/adu/calculate_hash.py
+      shell: sh
+      
     - name: Make a Device Update
       uses: azure/CLI@v1
       with:
