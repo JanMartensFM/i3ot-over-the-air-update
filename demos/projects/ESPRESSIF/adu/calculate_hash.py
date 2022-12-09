@@ -37,9 +37,9 @@ def update_manifest(firmwarefile, manifest_file_name, manifest_template_filename
 
 
 # Parameters for this deployment
-firmware_file = "azure_iot_freertos_esp32.bin"
-manifest_file = "ESPRESSIF.ESP32-Azure-IoT-Kit.1.9.importmanifest.json"
-manifest_template = "ESPRESSIF.ESP32-Azure-IoT-Kit.importmanifest.template.json"
+firmware_file = "demos/projects/ESPRESSIF/adu/azure_iot_freertos_esp32.bin"
+manifest_file = "demos/projects/ESPRESSIF/adu/ESPRESSIF.ESP32-Azure-IoT-Kit.1.9.importmanifest.json"
+manifest_template = "demos/projects/ESPRESSIF/adu/ESPRESSIF.ESP32-Azure-IoT-Kit.importmanifest.template.json"
 
 
 update_manifest(firmware_file, manifest_file, manifest_template)
