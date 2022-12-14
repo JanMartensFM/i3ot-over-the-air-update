@@ -14,10 +14,13 @@
 #include "esp_netif.h"
 #include "esp_sntp.h"
 #include "esp_log.h"
+#include "esp_system.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/semphr.h"
 #include "nvs_flash.h"
+#include "nvs.h"
+
 
 /* Azure Provisioning/IoT Hub library includes */
 #include "azure_iot_hub_client.h"
@@ -80,9 +83,23 @@ static bool xTimeInitialized = false;
 static xSemaphoreHandle xSemphGetIpAddrs;
 static esp_ip4_addr_t xIpAddress;
 
+
+/*-----------------------------------------------------------*/
+// NVS Storage for device specific data.
 /*-----------------------------------------------------------*/
 
-extern void vStartDemoTask( void );
+static char *m_wifi_ssid_string;
+static char *m_wifi_pw_string;
+
+static char *m_iot_fqdn_string;
+static char *m_iot_device_id_string;
+static char *m_iot_device_nr_string;
+static char *m_iot_device_key_string;
+
+/*-----------------------------------------------------------*/
+
+extern void vStartDemoTask( char* iot_fqdn_string, char* iot_device_id_string,  char* iot_device_key_string );
+
 /*-----------------------------------------------------------*/
 
 /**
@@ -186,18 +203,38 @@ static esp_netif_t * prvWifiStart( void )
 
     ESP_ERROR_CHECK( esp_wifi_set_storage( WIFI_STORAGE_RAM ) );
 
+
+
+    // Use SSID and password stored in NVS.
     wifi_config_t xWifiConfig =
     {
         .sta                    =
         {
-            .ssid               = CONFIG_SAMPLE_IOT_WIFI_SSID,
-            .password           = CONFIG_SAMPLE_IOT_WIFI_PASSWORD,
             .scan_method        = SAMPLE_IOT_WIFI_SCAN_METHOD,
             .sort_method        = SAMPLE_IOT_WIFI_CONNECT_AP_SORT_METHOD,
             .threshold.rssi     = CONFIG_SAMPLE_IOT_WIFI_SCAN_RSSI_THRESHOLD,
             .threshold.authmode = SAMPLE_IOT_WIFI_SCAN_AUTH_MODE_THRESHOLD,
         },
     };
+    strcpy(&xWifiConfig.sta.ssid, m_wifi_ssid_string);
+    strcpy(&xWifiConfig.sta.password, m_wifi_pw_string);
+
+
+
+    // wifi_config_t xWifiConfig =
+    // {
+    //     .sta                    =
+    //     {
+    //         .ssid               = CONFIG_SAMPLE_IOT_WIFI_SSID,
+    //         .password           = CONFIG_SAMPLE_IOT_WIFI_PASSWORD,
+    //         .scan_method        = SAMPLE_IOT_WIFI_SCAN_METHOD,
+    //         .sort_method        = SAMPLE_IOT_WIFI_CONNECT_AP_SORT_METHOD,
+    //         .threshold.rssi     = CONFIG_SAMPLE_IOT_WIFI_SCAN_RSSI_THRESHOLD,
+    //         .threshold.authmode = SAMPLE_IOT_WIFI_SCAN_AUTH_MODE_THRESHOLD,
+    //     },
+    // };
+
+
     ESP_LOGI( TAG, "Connecting to %s...", xWifiConfig.sta.ssid );
     ESP_ERROR_CHECK( esp_wifi_set_mode( WIFI_MODE_STA ) );
     ESP_ERROR_CHECK( esp_wifi_set_config( WIFI_IF_STA, &xWifiConfig ) );
@@ -233,6 +270,8 @@ static void prvWifiStop( void )
 
 static esp_err_t prvConnectNetwork( void )
 {
+    ESP_LOGI( TAG, "Entered prvConnectNetwork" );
+
     if( xSemphGetIpAddrs != NULL )
     {
         return ESP_ERR_INVALID_STATE;
@@ -268,6 +307,8 @@ static esp_err_t prvConnectNetwork( void )
             ESP_LOGI( TAG, "- IPv4 address: " IPSTR, IP2STR( &xIpInfo.ip ) );
         }
     }
+
+    ESP_LOGI( TAG, "Exited prvConnectNetwork" );
 
     return ESP_OK;
 }
@@ -316,8 +357,108 @@ uint64_t ullGetUnixTime( void )
 }
 /*-----------------------------------------------------------*/
 
+static void write_to_nvs()
+{
+
+    char *wifi_ssid_string = "Flanders Make Guest 2\0";
+    char *wifi_pw_string = "**********\0";
+
+    char *iot_fqdn_string = "rgtestjaniothub.azure-devices.net\0";
+
+    // Device 1
+    char *iot_device_key_string = "mtzH7a7+tP0p2REVdcPAGrrZrsvfs7qRpdA7LFGaKZc=\0";
+    char *iot_device_id_string = "espazureiotkit\0";
+    char *iot_device_nr_string = "01\0";
+    // Device 2
+    // char *iot_device_id_string = "espazureiotkit-02\0";
+    // char *iot_device_nr_string = "02\0";
+    // char *iot_device_key_string = "Y2OmypzIlW5bi5474XyJVIjuylkux52pdvfyO1F9S4o=\0";
+
+    printf("Started writing to NVS.\n");
+
+    esp_err_t err = nvs_flash_init();
+
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
+
+    nvs_handle_t my_handle;
+
+    nvs_open("storage", NVS_READWRITE, &my_handle);
+
+    nvs_set_str(my_handle, "wifi_ssid", wifi_ssid_string);
+    nvs_set_str(my_handle, "wifi_pw", wifi_pw_string);
+    nvs_set_str(my_handle, "iot_fqdn", iot_fqdn_string);
+    nvs_set_str(my_handle, "iot_device_id", iot_device_id_string);
+    nvs_set_str(my_handle, "iot_device_nr", iot_device_nr_string);
+    nvs_set_str(my_handle, "iot_device_key", iot_device_key_string);
+
+    nvs_commit(my_handle);
+
+    // Close
+    nvs_close(my_handle);
+
+    printf("Finished writing to NVS.\n");
+
+}
+
+static void read_from_nvs()
+{
+    printf("Started reading from NVS.\n");
+
+    esp_err_t err = nvs_flash_init();
+
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
+
+    nvs_handle_t my_handle;
+
+    nvs_open("storage", NVS_READWRITE, &my_handle);
+
+    size_t required_size = 0;
+
+    nvs_get_str(my_handle, "wifi_ssid", NULL, &required_size);
+    m_wifi_ssid_string = malloc(required_size);
+    nvs_get_str(my_handle, "wifi_ssid", m_wifi_ssid_string, &required_size);
+
+    nvs_get_str(my_handle, "wifi_pw", NULL, &required_size);
+    m_wifi_pw_string = malloc(required_size);
+    nvs_get_str(my_handle, "wifi_pw", m_wifi_pw_string, &required_size);
+
+    nvs_get_str(my_handle, "iot_fqdn", NULL, &required_size);
+    m_iot_fqdn_string = malloc(required_size);
+    nvs_get_str(my_handle, "iot_fqdn", m_iot_fqdn_string, &required_size);
+
+    nvs_get_str(my_handle, "iot_device_id", NULL, &required_size);
+    m_iot_device_id_string = malloc(required_size);
+    nvs_get_str(my_handle, "iot_device_id", m_iot_device_id_string, &required_size);
+
+    nvs_get_str(my_handle, "iot_device_nr", NULL, &required_size);
+    m_iot_device_nr_string = malloc(required_size);
+    nvs_get_str(my_handle, "iot_device_nr", m_iot_device_nr_string, &required_size);
+
+    nvs_get_str(my_handle, "iot_device_key", NULL, &required_size);
+    m_iot_device_key_string = malloc(required_size);
+    nvs_get_str(my_handle, "iot_device_key", m_iot_device_key_string, &required_size);
+
+
+
+    printf("Read data => wifi_ssid: %s\n", m_wifi_ssid_string);
+    // printf("Read data => wifi_pw: %s\n", wifi_pw_string);
+    printf("Read data => iot_fqdn: %s\n", m_iot_fqdn_string);
+    printf("Read data => iot_device_id: %s\n", m_iot_device_id_string);
+    printf("Read data => iot_device_nr: %s\n", m_iot_device_nr_string);
+    printf("Read data => iot_device_key: %s\n", m_iot_device_key_string);
+
+    nvs_close(my_handle);
+
+    printf("Finished reading from NVS.\n");
+}
+
+
 void app_main( void )
 {
+    // write_to_nvs();
+
+    read_from_nvs();
+
     ESP_ERROR_CHECK( nvs_flash_init() );
     ESP_ERROR_CHECK( esp_netif_init() );
     ESP_ERROR_CHECK( esp_event_loop_create_default() );
@@ -328,12 +469,21 @@ void app_main( void )
     initialize_sensors( );
     oled_clean_screen();
 
-    oled_show_message( ( uint8_t * ) OLED_SPLASH_MESSAGE, sizeof( OLED_SPLASH_MESSAGE ) - 1 );
+    
+    char* string_to_show[50];
+
+    strcpy(string_to_show, OLED_SPLASH_MESSAGE);
+    strcat(string_to_show, "   Device: ");
+    strcat(string_to_show, m_iot_device_nr_string);
+
+    oled_show_message( ( uint8_t * ) string_to_show, strlen(string_to_show) );
+
+    // oled_show_message( ( uint8_t * ) OLED_SPLASH_MESSAGE, sizeof( OLED_SPLASH_MESSAGE ) - 1 );
 
     ( void ) prvConnectNetwork();
 
     prvInitializeTime();
 
-    vStartDemoTask();
+    vStartDemoTask(m_iot_fqdn_string, m_iot_device_id_string, m_iot_device_key_string);
 }
 /*-----------------------------------------------------------*/

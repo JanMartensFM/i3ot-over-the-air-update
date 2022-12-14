@@ -37,6 +37,7 @@
 /* Data Interface Definition */
 #include "sample_azure_iot_pnp_data_if.h"
 
+
 /*-----------------------------------------------------------*/
 
 /* Compile time error for undefined configs. */
@@ -169,11 +170,6 @@ struct NetworkContext
 };
 
 
-
-
-
-
-
 AzureIoTHubClient_t xAzureIoTHubClient;
 AzureIoTADUClient_t xAzureIoTADUClient;
 AzureIoTADUUpdateRequest_t xAzureIoTAduUpdateRequest;
@@ -226,6 +222,10 @@ static AzureIoTHubClientComponent_t pnp_components[ sampleaduPNP_COMPONENTS_LIST
 /* This does not affect devices that actually implement the ADU process */
 /* as they will reboot before getting to the place where this is used. */
 bool xDidDeviceUpdate = false;
+
+static char *m_iot_fqdn_string;
+static char *m_iot_device_id_string;
+static char *m_iot_device_key_string;
 
 /*-----------------------------------------------------------*/
 
@@ -743,10 +743,16 @@ static void prvAzureDemoTask( void * pvParameters )
         uint32_t pulIothubHostnameLength = 0;
         uint32_t pulIothubDeviceIdLength = 0;
     #else
-        uint8_t * pucIotHubHostname = ( uint8_t * ) democonfigHOSTNAME;
-        uint8_t * pucIotHubDeviceId = ( uint8_t * ) democonfigDEVICE_ID;
-        uint32_t pulIothubHostnameLength = sizeof( democonfigHOSTNAME ) - 1;
-        uint32_t pulIothubDeviceIdLength = sizeof( democonfigDEVICE_ID ) - 1;
+        
+        uint8_t * pucIotHubHostname = ( uint8_t * ) m_iot_fqdn_string;
+        uint8_t * pucIotHubDeviceId = ( uint8_t * ) m_iot_device_id_string;
+        uint32_t pulIothubHostnameLength = strlen(m_iot_fqdn_string);
+        uint32_t pulIothubDeviceIdLength = strlen(m_iot_device_id_string);
+        
+        // uint8_t * pucIotHubHostname = ( uint8_t * ) democonfigHOSTNAME;
+        // uint8_t * pucIotHubDeviceId = ( uint8_t * ) democonfigDEVICE_ID;
+        // uint32_t pulIothubHostnameLength = sizeof( democonfigHOSTNAME ) - 1;
+        // uint32_t pulIothubDeviceIdLength = sizeof( democonfigDEVICE_ID ) - 1;
     #endif /* democonfigENABLE_DPS_SAMPLE */
 
     ( void ) pvParameters;
@@ -820,13 +826,29 @@ static void prvAzureDemoTask( void * pvParameters )
         xResult = AzureIoTADUClient_Init( &xAzureIoTADUClient, &xADUOptions );
         configASSERT( xResult == eAzureIoTSuccess );
 
+
+
         #ifdef democonfigDEVICE_SYMMETRIC_KEY
+
+            uint32_t required_size = strlen( m_iot_device_key_string );
+
             xResult = AzureIoTHubClient_SetSymmetricKey( &xAzureIoTHubClient,
-                                                         ( const uint8_t * ) democonfigDEVICE_SYMMETRIC_KEY,
-                                                         sizeof( democonfigDEVICE_SYMMETRIC_KEY ) - 1,
+                                                         (( const uint8_t * ) m_iot_device_key_string),
+                                                         required_size,
                                                          Crypto_HMAC );
             configASSERT( xResult == eAzureIoTSuccess );
+
         #endif /* democonfigDEVICE_SYMMETRIC_KEY */
+
+
+        // #ifdef democonfigDEVICE_SYMMETRIC_KEY
+        //     xResult = AzureIoTHubClient_SetSymmetricKey( &xAzureIoTHubClient,
+        //                                                  ( const uint8_t * ) democonfigDEVICE_SYMMETRIC_KEY,
+        //                                                  sizeof( democonfigDEVICE_SYMMETRIC_KEY ) - 1,
+        //                                                  Crypto_HMAC );
+        //     configASSERT( xResult == eAzureIoTSuccess );
+        // #endif /* democonfigDEVICE_SYMMETRIC_KEY */
+
 
         /* Sends an MQTT Connect packet over the already established TLS connection,
          * and waits for connection acknowledgment (CONNACK) packet. */
@@ -835,15 +857,72 @@ static void prvAzureDemoTask( void * pvParameters )
         xResult = AzureIoTHubClient_Connect( &xAzureIoTHubClient,
                                              false, &xSessionPresent,
                                              sampleazureiotCONNACK_RECV_TIMEOUT_MS );
+
+        if (xResult == eAzureIoTErrorInvalidArgument)
+        {
+            printf("Invalid argument.");
+        }
+
+        if (xResult == eAzureIoTErrorFailed)
+        {
+            printf("eAzureIoTErrorFailed.");
+        }
+        if (xResult == eAzureIoTErrorInitFailed)
+        {
+            printf("eAzureIoTErrorInitFailed.");
+        }
+
+        if (xResult != eAzureIoTSuccess)
+        {
+            printf("Well something went wrong.");
+        }
+
+
+    // eAzureIoTErrorFailed,                /**< There was a failure. */
+    // eAzureIoTErrorInvalidArgument,       /**< Input argument does not comply with the expected range of values. */
+    // eAzureIoTErrorPending,               /**< The status of the operation is pending. */
+    // eAzureIoTErrorOutOfMemory,           /**< The system is out of memory. */
+    // eAzureIoTErrorInitFailed,            /**< The initialization failed. */
+    // eAzureIoTErrorSubackWaitTimeout,     /**< There was timeout while waiting for SUBACK. */
+    // eAzureIoTErrorTopicNotSubscribed,    /**< Topic not subscribed. */
+    // eAzureIoTErrorPublishFailed,         /**< Failed to publish. */
+    // eAzureIoTErrorSubscribeFailed,       /**< Failed to subscribe. */
+    // eAzureIoTErrorUnsubscribeFailed,     /**< Failed to unsubscribe. */
+    // eAzureIoTErrorServerError,           /**< There was a server error in registration. */
+    // eAzureIoTErrorItemNotFound,          /**< The item was not found. */
+    // eAzureIoTErrorTopicNoMatch,          /**< The received message was not for the currently processed feature. */
+    // eAzureIoTErrorTokenGenerationFailed, /**< There was a failure. */
+    // eAzureIoTErrorEndOfProperties,       /**< End of properties when iterating with AzureIoTHubClientProperties_GetNextComponentProperty(). */
+    // eAzureIoTErrorInvalidResponse,       /**< Invalid response from server. */
+    // eAzureIoTErrorUnexpectedChar,        /**< Input can't be successfully parsed. */
+
+    // /* === JSON: Error results === */
+    // eAzureIoTErrorJSONInvalidState,    /**< The kind of the token being read is not compatible with the expected type of the value. */
+    // eAzureIoTErrorJSONNestingOverflow, /**< The JSON depth is too large. */
+    // eAzureIoTErrorJSONReaderDone       /**< No more JSON text left to process. */
+
+
+
+
+
         configASSERT( xResult == eAzureIoTSuccess );
+
+        LogInfo( ( "Creating an MQTT connection => connected ") );
+
 
         xResult = AzureIoTHubClient_SubscribeCommand( &xAzureIoTHubClient, prvHandleCommand,
                                                       &xAzureIoTHubClient, sampleazureiotSUBSCRIBE_TIMEOUT );
         configASSERT( xResult == eAzureIoTSuccess );
 
+        LogInfo( ( "Creating an MQTT connection => subscribed ") );
+
+
         xResult = AzureIoTHubClient_SubscribeProperties( &xAzureIoTHubClient, prvHandleProperties,
                                                          &xAzureIoTHubClient, sampleazureiotSUBSCRIBE_TIMEOUT );
         configASSERT( xResult == eAzureIoTSuccess );
+
+        LogInfo( ( "Creating an MQTT connection => Properties retrieved. ") );
+
 
         xResult = AzureIoTADUClient_SendAgentState( &xAzureIoTADUClient,
                                                     &xAzureIoTHubClient,
@@ -1133,8 +1212,13 @@ static uint32_t prvConnectToServerWithBackoffRetries( const char * pcHostName,
 /*
  * @brief Create the task that demonstrates the AzureIoTHub demo
  */
-void vStartDemoTask( void )
+
+void vStartDemoTask( char* iot_fqdn_string, char* iot_device_id_string,  char* iot_device_key_string )
 {
+    m_iot_fqdn_string = iot_fqdn_string;
+    m_iot_device_id_string = iot_device_id_string;
+    m_iot_device_key_string = iot_device_key_string;
+
     /* This example uses a single application task, which in turn is used to
      * connect, subscribe, publish, unsubscribe and disconnect from the IoT Hub */
     xTaskCreate( prvAzureDemoTask,         /* Function that implements the task. */
