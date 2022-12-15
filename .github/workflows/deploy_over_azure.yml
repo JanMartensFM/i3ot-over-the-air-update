@@ -33,6 +33,11 @@ jobs:
           VERSION_NUMBER: ${{ steps.version-bump.outputs.newTag }}
       run: echo "Version number being used $VERSION_NUMBER"
 
+    - name: Generate version without dots
+      run: |
+        VERSION_NUMBER_WITHOUT_DOTS="${VERSION_NUMBER//./-}"
+        echo $VERSION_NUMBER_WITHOUT_DOTS
+        
     - name: Update version number in demo_config.h
       run: python demos/projects/ESPRESSIF/adu/replace_version_demo_config.py ${{ steps.version-bump.outputs.newTag }}
       shell: sh
@@ -82,7 +87,7 @@ jobs:
       uses: azure/CLI@v1
       with:
         inlineScript: |
-            az iot du device deployment create -n fmaduseviceaccount -i fmdevupdatetoiothub --group-id azureiotkit-attempt2 --deployment-id azureiotkit-attempt2-${{ steps.version_number_with_dashes.outputs.value }} --update-name ESP32-Azure-IoT-Kit --update-provider ESPRESSIF --update-version ${{ steps.version-bump.outputs.newTag }}
+            az iot du device deployment create -n fmaduseviceaccount -i fmdevupdatetoiothub --group-id azureiotkit-attempt2 --deployment-id azureiotkit-attempt2-${{ VERSION_NUMBER_WITHOUT_DOTS }} --update-name ESP32-Azure-IoT-Kit --update-provider ESPRESSIF --update-version ${{ steps.version-bump.outputs.newTag }}
 
 
 
