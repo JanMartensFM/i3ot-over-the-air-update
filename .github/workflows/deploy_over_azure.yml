@@ -23,12 +23,18 @@ jobs:
       with:
         submodules: 'recursive'
         ref: feature/iot-adu
+
+    - name: Update version number in demo_config.h
+      run: python demos/projects/ESPRESSIF/adu/replace_version_demo_config.py ${{ env.VERSION_NUMBER }}
+      shell: sh
+
     - name: esp-idf build
       uses: espressif/esp-idf-ci-action@v1
       with:
         esp_idf_version: v4.3
         target: esp32
         path: 'demos/projects/ESPRESSIF/adu/'
+
     - uses: azure/login@v1
       with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
