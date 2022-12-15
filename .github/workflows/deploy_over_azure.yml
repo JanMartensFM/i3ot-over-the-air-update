@@ -40,7 +40,7 @@ jobs:
       shell: sh
 
     - name: Print version without dots
-      run: echo "Version number without dots ${{ env.VERSION_NUMBER_WITHOUT_DOTS }}"
+      run: echo ${{ env.VERSION_NUMBER_WITHOUT_DOTS }}
 
     - name: Update version number in demo_config.h
       run: python demos/projects/ESPRESSIF/adu/replace_version_demo_config.py ${{ steps.version-bump.outputs.newTag }}
