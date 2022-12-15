@@ -29,14 +29,8 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         PACKAGEJSON_DIR:  'demos/projects/ESPRESSIF/adu'
         
-    - name: Copy version number to environment variable.
-      env:
-          VERSION_NUMBER: ${{ steps.version-bump.outputs.newTag }}
-      run: echo "Version number being used $VERSION_NUMBER"
-
-
     - name: Set VERSION_NUMBER_WITHOUT_DOTS as version number without dots
-      run: python demos/projects/ESPRESSIF/adu/version_number_without_dots.py ${{ env.VERSION_NUMBER }}
+      run: python demos/projects/ESPRESSIF/adu/version_number_without_dots.py ${{ steps.version-bump.outputs.newTag }}
       shell: sh
 
     - name: Print version without dots
