@@ -64,7 +64,7 @@ jobs:
       uses: azure/CLI@v1
       with:
         inlineScript: |
-            az iot du device deployment create -n fmaduseviceaccount -i fmdevupdatetoiothub --group-id azureiotkit-attempt2 --deployment-id azureiotkit-attempt2 --update-name ESP32-Azure-IoT-Kit --update-provider ESPRESSIF --update-version 2.2
+            az iot du device deployment create -n fmaduseviceaccount -i fmdevupdatetoiothub --group-id azureiotkit-attempt2 --deployment-id azureiotkit-attempt2-2.3 --update-name ESP32-Azure-IoT-Kit --update-provider ESPRESSIF --update-version 2.3
 
 
 
