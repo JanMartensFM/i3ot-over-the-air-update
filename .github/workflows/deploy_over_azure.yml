@@ -31,10 +31,10 @@ jobs:
     - name: Output Step                             # Optional: Prints the new version
       env:
           VERSION_NUMBER: ${{ steps.version-bump.outputs.newTag }}
-      run: echo "new tag $NEW_TAG"
+      run: echo "Version number being used $VERSION_NUMBER"
 
     - name: Update version number in demo_config.h
-      run: python demos/projects/ESPRESSIF/adu/replace_version_demo_config.py ${{ env.VERSION_NUMBER }}
+      run: python demos/projects/ESPRESSIF/adu/replace_version_demo_config.py ${{ steps.version-bump.outputs.newTag }}
       shell: sh
 
     - name: esp-idf build
@@ -61,7 +61,7 @@ jobs:
         target: "demos/projects/ESPRESSIF/adu/azure_iot_freertos_esp32.bin"
       
     - name: Generate manifest file
-      run: python demos/projects/ESPRESSIF/adu/calculate_hash.py ${{ env.VERSION_NUMBER }}
+      run: python demos/projects/ESPRESSIF/adu/calculate_hash.py ${{ steps.version-bump.outputs.newTag }}
       shell: sh
       
     - name: Make a Device Update
@@ -74,14 +74,14 @@ jobs:
       uses: mad9000/actions-find-and-replace-string@1
       id: version_number_with_dashes
       with:
-        source: ${{ env.VERSION_NUMBER }}
+        source: ${{ steps.version-bump.outputs.newTag }}
         find: '.'
         replace: '-'
     - name: Trigger deployment to devices
       uses: azure/CLI@v1
       with:
         inlineScript: |
-            az iot du device deployment create -n fmaduseviceaccount -i fmdevupdatetoiothub --group-id azureiotkit-attempt2 --deployment-id azureiotkit-attempt2-${{ steps.version_number_with_dashes.outputs.value }} --update-name ESP32-Azure-IoT-Kit --update-provider ESPRESSIF --update-version ${{ env.VERSION_NUMBER }}
+            az iot du device deployment create -n fmaduseviceaccount -i fmdevupdatetoiothub --group-id azureiotkit-attempt2 --deployment-id azureiotkit-attempt2-${{ steps.version_number_with_dashes.outputs.value }} --update-name ESP32-Azure-IoT-Kit --update-provider ESPRESSIF --update-version ${{ steps.version-bump.outputs.newTag }}
 
 
 
