@@ -73,7 +73,8 @@
 
 #define SNTP_SERVER_FQDN                                "pool.ntp.org"
 
-#define OLED_SPLASH_MESSAGE                        "ESP32 ADU v" democonfigADU_UPDATE_VERSION
+// #define OLED_SPLASH_MESSAGE                        "ESP32 ADU v" democonfigADU_UPDATE_VERSION
+#define OLED_SPLASH_MESSAGE                        "OTA v" democonfigADU_UPDATE_VERSION
 /*-----------------------------------------------------------*/
 
 static const char * TAG = "sample_azureiotkit";
