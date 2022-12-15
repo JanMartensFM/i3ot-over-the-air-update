@@ -34,11 +34,14 @@ jobs:
           VERSION_NUMBER: ${{ steps.version-bump.outputs.newTag }}
       run: echo "Version number being used $VERSION_NUMBER"
 
-    - name: Generate version without dots
-      run: |
-        VERSION_NUMBER_WITHOUT_DOTS="${VERSION_NUMBER//./-}"
-        echo "Version number without dots $VERSION_NUMBER_WITHOUT_DOTS"
-        
+
+    - name: Set VERSION_NUMBER_WITHOUT_DOTS as version number without dots
+      run: python demos/projects/ESPRESSIF/adu/version_number_without_dots.py ${{ env.VERSION_NUMBER }}
+      shell: sh
+
+    - name: Print version without dots
+      run: echo "Version number without dots $VERSION_NUMBER_WITHOUT_DOTS"
+
     - name: Update version number in demo_config.h
       run: python demos/projects/ESPRESSIF/adu/replace_version_demo_config.py ${{ steps.version-bump.outputs.newTag }}
       shell: sh
