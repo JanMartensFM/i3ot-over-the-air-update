@@ -27,7 +27,7 @@ jobs:
       uses:  'phips28/gh-action-bump-version@master'
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        PACKAGEJSON_DIR:  'demos/projects/ESPRESSIF/adu/config'
+        PACKAGEJSON_DIR:  'demos/projects/ESPRESSIF/adu'
     - name: Output Step                             # Optional: Prints the new version
       env:
           VERSION_NUMBER: ${{ steps.version-bump.outputs.newTag }}
