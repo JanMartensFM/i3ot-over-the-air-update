@@ -89,13 +89,21 @@ static esp_ip4_addr_t xIpAddress;
 // NVS Storage for device specific data.
 /*-----------------------------------------------------------*/
 
-static char *m_wifi_ssid_string;
-static char *m_wifi_pw_string;
+static char *m_wifi_ssid_string_1;
+static char *m_wifi_pw_string_1;
+
+static char *m_wifi_ssid_string_2;
+static char *m_wifi_pw_string_2;
+
 
 static char *m_iot_fqdn_string;
 static char *m_iot_device_id_string;
 static char *m_iot_device_nr_string;
 static char *m_iot_device_key_string;
+
+static int m_current_ssid = 1;
+static int m_wifi_current_attempt = 1;
+static bool m_wifi_connect_failed = false;
 
 /*-----------------------------------------------------------*/
 
@@ -141,7 +149,20 @@ static void prvOnWifiDisconnect( void * pvArg,
                                  int32_t lEventId,
                                  void * pvEventData )
 {
-    ESP_LOGI( TAG, "Wi-Fi disconnected, trying to reconnect..." );
+    ESP_LOGI( TAG, "Wi-Fi disconnected, trying to reconnect... attempt %d", m_wifi_current_attempt );
+
+    if (m_wifi_current_attempt == 5)
+    {
+        ESP_LOGI( TAG, "Too many attempts. Stopping");
+        
+        m_wifi_connect_failed = true;
+        xSemaphoreGive( xSemphGetIpAddrs );
+
+        return;
+    }
+    
+    m_wifi_current_attempt++;
+
     esp_err_t xError = esp_wifi_connect();
 
     if( xError == ESP_ERR_WIFI_NOT_STARTED )
@@ -205,7 +226,6 @@ static esp_netif_t * prvWifiStart( void )
     ESP_ERROR_CHECK( esp_wifi_set_storage( WIFI_STORAGE_RAM ) );
 
 
-
     // Use SSID and password stored in NVS.
     wifi_config_t xWifiConfig =
     {
@@ -217,26 +237,20 @@ static esp_netif_t * prvWifiStart( void )
             .threshold.authmode = SAMPLE_IOT_WIFI_SCAN_AUTH_MODE_THRESHOLD,
         },
     };
-    strcpy(&xWifiConfig.sta.ssid, m_wifi_ssid_string);
-    strcpy(&xWifiConfig.sta.password, m_wifi_pw_string);
 
+    if (m_current_ssid == 1)
+    {
 
+        strcpy(&xWifiConfig.sta.ssid, m_wifi_ssid_string_1);
+        strcpy(&xWifiConfig.sta.password, m_wifi_pw_string_1);
+    }
+    else
+    {
+        strcpy(&xWifiConfig.sta.ssid, m_wifi_ssid_string_2);
+        strcpy(&xWifiConfig.sta.password, m_wifi_pw_string_2);
+    }
 
-    // wifi_config_t xWifiConfig =
-    // {
-    //     .sta                    =
-    //     {
-    //         .ssid               = CONFIG_SAMPLE_IOT_WIFI_SSID,
-    //         .password           = CONFIG_SAMPLE_IOT_WIFI_PASSWORD,
-    //         .scan_method        = SAMPLE_IOT_WIFI_SCAN_METHOD,
-    //         .sort_method        = SAMPLE_IOT_WIFI_CONNECT_AP_SORT_METHOD,
-    //         .threshold.rssi     = CONFIG_SAMPLE_IOT_WIFI_SCAN_RSSI_THRESHOLD,
-    //         .threshold.authmode = SAMPLE_IOT_WIFI_SCAN_AUTH_MODE_THRESHOLD,
-    //     },
-    // };
-
-
-    ESP_LOGI( TAG, "Connecting to %s...", xWifiConfig.sta.ssid );
+    ESP_LOGI( TAG, "Connecting to %s ...", xWifiConfig.sta.ssid );
     ESP_ERROR_CHECK( esp_wifi_set_mode( WIFI_MODE_STA ) );
     ESP_ERROR_CHECK( esp_wifi_set_config( WIFI_IF_STA, &xWifiConfig ) );
     ESP_ERROR_CHECK( esp_wifi_start() );
@@ -271,6 +285,8 @@ static void prvWifiStop( void )
 
 static esp_err_t prvConnectNetwork( void )
 {
+    m_wifi_connect_failed = false;
+    
     ESP_LOGI( TAG, "Entered prvConnectNetwork" );
 
     if( xSemphGetIpAddrs != NULL )
@@ -278,17 +294,45 @@ static esp_err_t prvConnectNetwork( void )
         return ESP_ERR_INVALID_STATE;
     }
 
-    ( void ) prvWifiStart();
+    bool wifi_connected = false;
 
-    /* create semaphore if at least one interface is active */
-    xSemphGetIpAddrs = xSemaphoreCreateCounting( NR_OF_IP_ADDRESSES_TO_WAIT_FOR, 0 );
-
-    ESP_ERROR_CHECK( esp_register_shutdown_handler( &prvWifiStop ) );
-    ESP_LOGI( TAG, "Waiting for IP(s)" );
-
-    for( int lCounter = 0; lCounter < NR_OF_IP_ADDRESSES_TO_WAIT_FOR; ++lCounter )
+    while (!wifi_connected)
     {
-        xSemaphoreTake( xSemphGetIpAddrs, portMAX_DELAY );
+        ( void ) prvWifiStart();
+
+        xSemphGetIpAddrs = xSemaphoreCreateCounting( NR_OF_IP_ADDRESSES_TO_WAIT_FOR, 0 );
+
+        ESP_ERROR_CHECK( esp_register_shutdown_handler( &prvWifiStop ) );
+        ESP_LOGI( TAG, "Waiting for IP(s)" );
+
+        for( int lCounter = 0; lCounter < NR_OF_IP_ADDRESSES_TO_WAIT_FOR; ++lCounter )
+        {
+            xSemaphoreTake( xSemphGetIpAddrs, portMAX_DELAY );
+        }
+
+        if (m_wifi_connect_failed == true)
+        {
+            ESP_LOGI( TAG, "Failed to connect, retry with other SSID" );
+            m_wifi_connect_failed = false;
+            m_wifi_current_attempt = 1;
+
+            ESP_ERROR_CHECK( esp_unregister_shutdown_handler( &prvWifiStop ) );
+
+            ( void ) prvWifiStop();
+
+            if (m_current_ssid == 1)
+            {
+                m_current_ssid = 2;
+            }
+            else
+            {
+                m_current_ssid = 1;
+            }
+        }
+        else
+        {
+            wifi_connected = true;
+        }
     }
 
     /* iterate over active interfaces, and print out IPs of "our" netifs */
@@ -360,20 +404,22 @@ uint64_t ullGetUnixTime( void )
 
 static void write_to_nvs()
 {
+    char *wifi_ssid_string_1 = "Flanders Make Guest 2\0";
+    char *wifi_pw_string_1 = "**********\0";
 
-    char *wifi_ssid_string = "Flanders Make Guest 2\0";
-    char *wifi_pw_string = "**********\0";
+    char *wifi_ssid_string_2 = "DoesAsus\0";
+    char *wifi_pw_string_2 = "***************\0";
 
     char *iot_fqdn_string = "rgtestjaniothub.azure-devices.net\0";
 
     // Device 1
-    char *iot_device_key_string = "mtzH7a7+tP0p2REVdcPAGrrZrsvfs7qRpdA7LFGaKZc=\0";
-    char *iot_device_id_string = "espazureiotkit\0";
-    char *iot_device_nr_string = "01\0";
+    // char *iot_device_key_string = "mtzH7a7+tP0p2REVdcPAGrrZrsvfs7qRpdA7LFGaKZc=\0";
+    // char *iot_device_id_string = "espazureiotkit\0";
+    // char *iot_device_nr_string = "01\0";
     // Device 2
-    // char *iot_device_id_string = "espazureiotkit-02\0";
-    // char *iot_device_nr_string = "02\0";
-    // char *iot_device_key_string = "Y2OmypzIlW5bi5474XyJVIjuylkux52pdvfyO1F9S4o=\0";
+    char *iot_device_id_string = "espazureiotkit-02\0";
+    char *iot_device_nr_string = "02\0";
+    char *iot_device_key_string = "Y2OmypzIlW5bi5474XyJVIjuylkux52pdvfyO1F9S4o=\0";
 
     printf("Started writing to NVS.\n");
 
@@ -385,8 +431,10 @@ static void write_to_nvs()
 
     nvs_open("storage", NVS_READWRITE, &my_handle);
 
-    nvs_set_str(my_handle, "wifi_ssid", wifi_ssid_string);
-    nvs_set_str(my_handle, "wifi_pw", wifi_pw_string);
+    nvs_set_str(my_handle, "wifi_ssid_1", wifi_ssid_string_1);
+    nvs_set_str(my_handle, "wifi_pw_1", wifi_pw_string_1);
+    nvs_set_str(my_handle, "wifi_ssid_2", wifi_ssid_string_2);
+    nvs_set_str(my_handle, "wifi_pw_2", wifi_pw_string_2);
     nvs_set_str(my_handle, "iot_fqdn", iot_fqdn_string);
     nvs_set_str(my_handle, "iot_device_id", iot_device_id_string);
     nvs_set_str(my_handle, "iot_device_nr", iot_device_nr_string);
@@ -415,13 +463,21 @@ static void read_from_nvs()
 
     size_t required_size = 0;
 
-    nvs_get_str(my_handle, "wifi_ssid", NULL, &required_size);
-    m_wifi_ssid_string = malloc(required_size);
-    nvs_get_str(my_handle, "wifi_ssid", m_wifi_ssid_string, &required_size);
+    nvs_get_str(my_handle, "wifi_ssid_1", NULL, &required_size);
+    m_wifi_ssid_string_1 = malloc(required_size);
+    nvs_get_str(my_handle, "wifi_ssid_1", m_wifi_ssid_string_1, &required_size);
 
-    nvs_get_str(my_handle, "wifi_pw", NULL, &required_size);
-    m_wifi_pw_string = malloc(required_size);
-    nvs_get_str(my_handle, "wifi_pw", m_wifi_pw_string, &required_size);
+    nvs_get_str(my_handle, "wifi_pw_1", NULL, &required_size);
+    m_wifi_pw_string_1 = malloc(required_size);
+    nvs_get_str(my_handle, "wifi_pw_1", m_wifi_pw_string_1, &required_size);
+
+    nvs_get_str(my_handle, "wifi_ssid_2", NULL, &required_size);
+    m_wifi_ssid_string_2 = malloc(required_size);
+    nvs_get_str(my_handle, "wifi_ssid_2", m_wifi_ssid_string_2, &required_size);
+
+    nvs_get_str(my_handle, "wifi_pw_2", NULL, &required_size);
+    m_wifi_pw_string_2 = malloc(required_size);
+    nvs_get_str(my_handle, "wifi_pw_2", m_wifi_pw_string_2, &required_size);
 
     nvs_get_str(my_handle, "iot_fqdn", NULL, &required_size);
     m_iot_fqdn_string = malloc(required_size);
@@ -441,12 +497,15 @@ static void read_from_nvs()
 
 
 
-    printf("Read data => wifi_ssid: %s\n", m_wifi_ssid_string);
+    printf("Read data => wifi_ssid 1 : (%s)\n", m_wifi_ssid_string_1);
+    // printf("Read data => wifi_pw 1: (%s)\n", m_wifi_pw_string_1);
+    printf("Read data => wifi_ssid 2: (%s)\n", m_wifi_ssid_string_2);
+    // printf("Read data => wifi_pw 2: (%s)\n", m_wifi_pw_string_2);
     // printf("Read data => wifi_pw: %s\n", wifi_pw_string);
-    printf("Read data => iot_fqdn: %s\n", m_iot_fqdn_string);
-    printf("Read data => iot_device_id: %s\n", m_iot_device_id_string);
-    printf("Read data => iot_device_nr: %s\n", m_iot_device_nr_string);
-    printf("Read data => iot_device_key: %s\n", m_iot_device_key_string);
+    printf("Read data => iot_fqdn: (%s)\n", m_iot_fqdn_string);
+    printf("Read data => iot_device_id: (%s)\n", m_iot_device_id_string);
+    printf("Read data => iot_device_nr: (%s)\n", m_iot_device_nr_string);
+    printf("Read data => iot_device_key: (%s)\n", m_iot_device_key_string);
 
     nvs_close(my_handle);
 
